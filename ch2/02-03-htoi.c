@@ -1,6 +1,5 @@
 #include <stdio.h>
 
-#define MAXLINE 30
 int htoi(char s[]);
 int lower(int c);
 int convert(int c);
@@ -24,6 +23,7 @@ int main()
     printf("%20s = %30d\n", s6, htoi(s6));
     printf("%20s = %30d\n", s7, htoi(s7));
     printf("%20s = %30d\n", s8, htoi(s8));
+    return 0;
 }
 
 int htoi(char s[])
