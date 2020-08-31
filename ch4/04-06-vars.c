@@ -3,19 +3,15 @@
 #include <math.h>       /* for sin, exp and pow */
 
 #define MAXOP   100     /* max size of operand or operator */
-#define MAXVARS 26      /* max number of variables for storage */
 #define NUMBER  '0'     /* signal that a number was found */
-#define TOP     'T'     /* signal for top command */
-#define DUPE    'U'     /* signal for duplicate command */
-#define SWAP    'W'     /* signal for swap command */
-#define CLEAR   'C'     /* signal for clear command */
-#define SIN     'S'     /* signal for sin function */
-#define EXP     'E'     /* signal for exp function */
+#define TOP     't'     /* signal for top command */
+#define DUPE    'u'     /* signal for duplicate command */
+#define SWAP    'w'     /* signal for swap command */
+#define CLEAR   'c'     /* signal for clear command */
+#define SIN     's'     /* signal for sin function */
+#define EXP     'e'     /* signal for exp function */
 #define POW     '^'     /* signal for pow function */
-#define PIPE    '|'
-#define SETVAR  1       /* signal for setting a variable */
-#define GETVAR  2       /* signal for getting a variable */
-#define ERROR   -1      /* signal for error */
+#define SETVAR  1       /* signal to set variable */
 
 int getop(char []);
 void push(double);
@@ -35,13 +31,13 @@ int main()
 {
     int type, mute, i;
     double op2;
-    double vars[MAXVARS];
+    double vars[26];
     char s[MAXOP];
     enum boolean { FALSE, TRUE };
 
     mute = FALSE;
-    for (i=0; i<MAXVARS; i++)
-        vars[i] = 0.0;
+    for (i=0; i<26; i++)
+        vars[i] = 0;
     while ((type = getop(s)) != EOF) {
         switch (type) {
         case NUMBER:
@@ -194,33 +190,30 @@ int getop(char s[])
         ;
     s[1] = '\0';
     if (c != '-' && !isdigit(c) && c != '.' && c != '|')
-        return c;           /* not a number or command */
+        return c;       /* not a number */
     if (c == '|') {
-        if ((c = getch()) >= 'A' && c <= 'Z') {
+        c = getch();
+        if (c >= 'A' && c <= 'Z') {
             s[0] = c;
             return SETVAR;
         } else {
             ungetch(c);
-            return ERROR;  /* not setting a variable */
+            return '|';
         }
     }
-    /* if (c >= 'A' && c <= 'Z') {
-        s[0] = c;
-        return GETVAR;
-    } */
     i = 0;
     if (c == '-') {
         if (isdigit(c = getch())) {
             s[++i] = c;
         } else {
             ungetch(c);
-            return '-';     /* not unary negative */
+            return '-'; /* not unary negative */
         }
     }
-    if (isdigit(c))         /* collect integer part */
+    if (isdigit(c))     /* collect integer part */
         while (isdigit(s[++i] = c = getch()))
             ;
-    if (c == '.')           /* collect fraction part */
+    if (c == '.')       /* collect fraction part */
         while (isdigit(s[++i] = c = getch()))
             ;
     s[i] = '\0';
