@@ -3,6 +3,7 @@
 #include <math.h>       /* for sin, exp and pow */
 
 #define MAXOP   100     /* max size of operand or operator */
+#define MAXVARS 26      /* max size of storage array */
 #define NUMBER  '0'     /* signal that a number was found */
 #define TOP     't'     /* signal for top command */
 #define DUPE    'u'     /* signal for duplicate command */
@@ -12,6 +13,7 @@
 #define EXP     'e'     /* signal for exp function */
 #define POW     '^'     /* signal for pow function */
 #define SETVAR  1       /* signal to set variable */
+#define GETVAR  2       /* signal to get variable */
 
 int getop(char []);
 void push(double);
@@ -21,22 +23,21 @@ void dupe(void);
 void swap(void);
 void clear(void);
 
-/* KnR Exercise 04-05 grant access to library functions
-    Note that I had to compile with -lm flags
-    e.g. gcc 04-05-math.c -lm
-                          ^^^ this bit */
+/* KnR Exercise 04-06 Add commands for handling variables
+    Allow '|' followed by uppercase letter to set a variable
+    Variables can be used in place of any normal number.  */
 
 /* reverse Polish calculator */
 int main()
 {
     int type, mute, i;
     double op2;
-    double vars[26];
+    double vars[MAXVARS];
     char s[MAXOP];
     enum boolean { FALSE, TRUE };
 
     mute = FALSE;
-    for (i=0; i<26; i++)
+    for (i=0; i<MAXVARS; i++)
         vars[i] = 0;
     while ((type = getop(s)) != EOF) {
         switch (type) {
@@ -96,6 +97,9 @@ int main()
         case SETVAR:
             vars[s[0] - 'A'] = top();
             mute = TRUE;
+            break;
+        case GETVAR:
+            push(vars[s[0] - 'A']);
             break;
         case '\n':
             if (mute)
@@ -189,8 +193,9 @@ int getop(char s[])
     while((s[0] = c = getch()) == ' ' || c == '\t')
         ;
     s[1] = '\0';
-    if (c != '-' && !isdigit(c) && c != '.' && c != '|')
-        return c;       /* not a number */
+    if (c != '-' && !isdigit(c) && c != '.' && c != '|' 
+            && (c < 'A' || c > 'Z'))
+        return c;       /* not a number, command or variable */
     if (c == '|') {
         c = getch();
         if (c >= 'A' && c <= 'Z') {
@@ -200,6 +205,9 @@ int getop(char s[])
             ungetch(c);
             return '|';
         }
+    }
+    if (c >= 'A' && c <= 'Z') {
+        return GETVAR;
     }
     i = 0;
     if (c == '-') {
