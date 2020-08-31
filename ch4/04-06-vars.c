@@ -12,6 +12,7 @@
 #define SIN     's'     /* signal for sin function */
 #define EXP     'e'     /* signal for exp function */
 #define POW     '^'     /* signal for pow function */
+#define RECENT  '_'
 #define SETVAR  1       /* signal to set variable */
 #define GETVAR  2       /* signal to get variable */
 
@@ -31,7 +32,7 @@ void clear(void);
 int main()
 {
     int type, mute, i;
-    double op2;
+    double op2, recent;
     double vars[MAXVARS];
     char s[MAXOP];
     enum boolean { FALSE, TRUE };
@@ -69,7 +70,7 @@ int main()
                 printf("error: modulo zero\n");
             break;
         case TOP:
-            printf("\t%.8g\n", top());
+            printf("\t%.8g\n", recent = top());
             mute = TRUE;
             break;
         case DUPE:
@@ -101,11 +102,15 @@ int main()
         case GETVAR:
             push(vars[s[0] - 'A']);
             break;
+        case RECENT:
+            push(recent);
+            break;
         case '\n':
-            if (mute)
+            if (mute) {
                 mute = FALSE;
-            else
-                printf("\t%.8g\n", pop());
+            } else {
+                printf("\t%.8g\n", recent = pop());
+            }
             break;
         default:
             printf("error: unknown command %s\n", s);
