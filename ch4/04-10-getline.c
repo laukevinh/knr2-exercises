@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>     /* for atof() */
 #include <math.h>       /* for sin, exp and pow */
-#include <string.h>     /* for strlen() */
 
 #define MAXLINE 1000    /* max size of getline */
 #define MAXOP   100     /* max size of operand or operator */
@@ -20,6 +19,7 @@
 
 int getline2(char s[], int lim);
 int getop(char line[], char op[]);
+void resetgetop(void);
 void push(double);
 double pop(void);
 double top(void);
@@ -31,7 +31,13 @@ void clear(void);
     to read an entireinput line; this makes getch and ungetch
     unnecessary. Revise the calculator to use this approach.
 
-     */
+    I wrapped getop with getline. Now getop needs to read from
+    char array instead of direct input, and it will need another
+    char array to store the operators and operands. I decided
+    to keep the bufp so getop can track its position in the line
+    between calls. Once getop is finished reading the line, I
+    reset bufp to 0 via another function. I think this is cleaner
+    than allowing main direct access to bufp.  */
 
 /* reverse Polish calculator */
 int main()
@@ -47,10 +53,10 @@ int main()
     for (i=0; i<MAXVARS; i++)
         vars[i] = 0;
     while ((len = getline2(s, MAXLINE)) > 0) {
-        while ((type = getop(s, t)) != EOF) {
+        while ((type = getop(s, t)) != '\0') {
             switch (type) {
             case NUMBER:
-                push(atof(s));
+                push(atof(t));
                 break;
             case '+':
                 push(pop() + pop());
@@ -103,11 +109,11 @@ int main()
                 push(pow(pop(), op2));
                 break;
             case SETVAR:
-                vars[s[0] - 'A'] = top();
+                vars[t[0] - 'A'] = top();
                 mute = TRUE;
                 break;
             case GETVAR:
-                push(vars[s[0] - 'A']);
+                push(vars[t[0] - 'A']);
                 break;
             case RECENT:
                 push(recent);
@@ -120,10 +126,11 @@ int main()
                 }
                 break;
             default:
-                printf("error: unknown command %s\n", s);
+                printf("error: unknown command %s\n", t);
                 break;
             }
         }
+        resetgetop();
     }
     return 0;
 }
@@ -210,15 +217,12 @@ void clear(void)
 
 #include <ctype.h>
 
-int bufp = 0;       /* next free position in buf */
-int getch(void);
-void ungetch(int);
-void ungets(char s[]);
+int bufp = 0;       /* next character in s[] */
 
 /* getop:   get next operator or numeric operand */
 int getop(char s[], char t[])
 {
-    int i, c, sign;
+    int i, c;
 
     while((t[0] = c = s[bufp++]) == ' ' || c == '\t')
         ;
@@ -233,7 +237,7 @@ int getop(char s[], char t[])
             return SETVAR;
         } else {
             bufp--;
-            return '|';
+            return s[bufp-1];
         }
     }
     if (c >= 'A' && c <= 'Z') {
@@ -245,7 +249,7 @@ int getop(char s[], char t[])
             t[++i] = c;
         } else {
             bufp--;
-            return '-'; /* not unary negative */
+            return s[bufp-1]; /* not unary negative */
         }
     }
     if (isdigit(c))     /* collect integer part */
@@ -255,38 +259,12 @@ int getop(char s[], char t[])
         while (isdigit(t[++i] = c = s[bufp++]))
             ;
     t[i] = '\0';
-    if (c != EOF)
+    if (c != '\0')
         bufp--;
     return NUMBER;
 }
 
-#define BUFSIZE 1
-
-char buf[BUFSIZE];  /* buffer for ungetch */
-
-
-int getch(void) /* get a (possibly pushed back) character */
+void resetgetop(void)
 {
-    return (bufp > 0) ? buf[--bufp] : getchar();
-}
-
-void ungetch(int c) /* push character back on input */
-{
-    if (bufp >= BUFSIZE)
-        printf("ungetch: too many characters\n");
-    else
-        buf[bufp++] = c;
-}
-
-void ungets(char s[])
-{
-    int i, len;
-
-    len = strlen(s);
-    if (len > BUFSIZE - bufp) {
-        printf("ungets: too many characters\n");
-    } else {
-        while (len > 0)
-            ungetch(s[--len]);
-    }
+    bufp = 0;
 }
