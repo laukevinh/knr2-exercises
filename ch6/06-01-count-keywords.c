@@ -1,3 +1,13 @@
+/* KnR Exercise 06-01   Our version of getword does not 
+    properly handle underscores, string constants, comments, 
+    or preprocessor control lines. Write a better version.
+
+    Spent quite a bit of time on this one. Just track
+    the state and use a temporary variable (e.g. char c)
+    to skip over underscore, string constants, comments,
+    and preprocessor control lines. Use *w when state
+    is valid code and need to track the word. */
+
 struct key {
     char *word;
     int count;
@@ -11,8 +21,8 @@ struct key {
     "default", 0,
     "if", 0,
     /* ... */
-    /* break */
-    // break
+    /* test keyword break */
+    // test keyword break
     "unsigned", 0,
     "void", 0,
     "volatile", 0,
@@ -109,13 +119,13 @@ int getword(char *word, int lim)
     }
     while (state == QUOTES) {
         if ((c = getch()) == '\\')
-            c = getch();
+            c = getch();    /* escaped so skip next c */
         else if (c == '\'' || c == EOF)
             break;
     }
     while (state == DBLQUOTES) {
         if ((c = getch()) == '\\')
-            c = getch();
+            c = getch();    /* escaped so skip next c */
         else if (c == '"' || c == EOF)
             break;
     }
@@ -133,7 +143,7 @@ int getword(char *word, int lim)
             break;
     }
     while (state == PREPROC) {
-        if (!isalnum(c = getch()) && c != '_' && c != EOF)
+        if (!isalnum(c = getch()) && c != '_')
             break;
     }
     for ( ; state == CODE && --lim > 0; w++) {
